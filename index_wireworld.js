@@ -1,4 +1,3 @@
-// width: 1000px; height: 800px;
 let canvas;
 let ctx;
 
@@ -14,7 +13,7 @@ function initializeGameOfLife() {
     for(let i = 0; i < gridSize; i++) {
         globalWorld.push(new Array(gridSize));
         for(let j = 0; j < gridSize; j++) {
-            globalWorld[i][j] = 2;
+            globalWorld[i][j] = 0;
         }
     }
 
@@ -108,7 +107,6 @@ function update() {
     // ctx.clearRect(0,0, 1000, 1000);
     ctx.fillStyle="black";
     ctx.fillRect(0,0, 1000, 1000);
-    // ctx.fill();
 
     if (state == "DRAWING") {
         ctx.strokeStyle="gray";
@@ -132,7 +130,6 @@ function update() {
         }
     }
 
-    // drawGameOfLife(ctx, globalWorld);
     drawElectrons(ctx, globalWorld);
 
     if (beginning != null && ending != null) {
@@ -150,17 +147,32 @@ function update() {
         }
     }
 
+    let offsetX = mousePosition.x;
+    let offsetY = mousePosition.y;
+    for(let i = 0; i < copied.length; i++) {
+        let x = offsetX + copied[i].x;
+        let y = offsetY + copied[i].y;
+        if (copied[i].state != 0) {
+            ctx.fillStyle = "green";
+            ctx.fillRect((x*5)+(x*2),(y*5)+(y*2),5,5);
+        }
+        if (copied[i].state == 0) {
+            ctx.fillStyle = "blue";
+            ctx.fillRect((x*5)+(x*2),(y*5)+(y*2),5,5);
+        }
+    }
 
-    // globalWorld = simulate(globalWorld);
     globalWorld = simulateWireworld(globalWorld);
 
-    setTimeout(update, 1000/20);
+    setTimeout(update, 1000/4);
 }
 
 let mouseDown = false;
 let mousePosition = {x: 0, y: 0};
 let beginning = null, ending = null;
 let mouseButton = null;
+
+let typeOfWire = 0;
 
 let copied = [];
 
@@ -183,21 +195,19 @@ window.onload = function() {
         if (state == "COPYING") {
             for (let i = beginX; i <= endX; i++) {
                 for (let j = beginY; j <= endY; j++) {
-                    copied.push({
-                        x: i - beginX,
-                        y: j - beginY,
-                        state: globalWorld[i][j]
-                    });
+                    if (globalWorld[i][j] != 0) {
+                        copied.push({
+                            x: i - beginX,
+                            y: j - beginY,
+                            state: globalWorld[i][j]
+                        });
+                    }
                 }
             }
         } else {
             for (let i = beginX; i <= endX; i++) {
                 for (let j = beginY; j <= endY; j++) {
-                    if (mouseButton == 0) {
-                        globalWorld[i][j] = 1;
-                    } else {
-                        globalWorld[i][j] = 2;
-                    }
+                    globalWorld[i][j] = typeOfWire;
                 }
             }
         }
@@ -245,6 +255,20 @@ window.onload = function() {
             }
         }
 
+        console.log(ev.key);
+        if (ev.key == "0") {
+            typeOfWire = 0;
+        }
+        if (ev.key == "1") {
+            typeOfWire = 1;
+        }
+        if (ev.key == "2") {
+            typeOfWire = 2;
+        }
+        if (ev.key == "3") {
+            typeOfWire = 3;
+        }
+
         if (ev.key == "f" && !simulateRunning) {
             if (state == "SIMULATING") {
                 state = "DRAWING"
@@ -264,6 +288,8 @@ window.onload = function() {
                 let y = offsetY + copied[i].y;
                 globalWorld[x][y] = copied[i].state;
             }
+
+            copied = [];
         }
 
         if (ev.key == "s") {
