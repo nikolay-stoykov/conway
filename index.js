@@ -5,7 +5,7 @@ let ctx;
 let simulateRunning = false;
 let state = "DRAWING"
 
-let gridSize = 120;
+let gridSize = 150;
 let world = [];
 
 let markedIndexes = [];
@@ -79,7 +79,7 @@ function countNeighbours(world, i,j) {
     if (j+1 < gridSize && world[i][j+1] == 1) {
         count++;
     }
-    if (i + 1 < gridSize && world[i+1][j-1] == 1) {
+    if (i + 1 < gridSize && j - 1 >= 0 && world[i+1][j-1] == 1) {
         count++;
     }
     if (i + 1 < gridSize && world[i+1][j] == 1) {
@@ -93,7 +93,9 @@ function countNeighbours(world, i,j) {
 }
 
 function update() {
-    ctx.clearRect(0,0, 1000, 800);
+    // ctx.clearRect(0,0, 1000, 1000);
+    ctx.fillStyle="black";
+    ctx.fillRect(0,0, 1000, 1000);
 
     if (state == "DRAWING") {
         ctx.strokeStyle="gray";
@@ -107,17 +109,17 @@ function update() {
         for(let i = 0; i < gridSize; i++) {
             ctx.beginPath();
             ctx.moveTo(i*7 - 1,0)
-            ctx.lineTo(i*7 - 1,1000);
+            ctx.lineTo(i*7 - 1,gridSize*7);
             ctx.stroke();
 
             ctx.beginPath();
             ctx.moveTo(0,i*7 - 1)
-            ctx.lineTo(1000,i*7 - 1);
+            ctx.lineTo(gridSize*7,i*7 - 1);
             ctx.stroke();
         }
     }
 
-    ctx.fillStyle="red";
+    ctx.fillStyle="white";
     for(let i = 0; i < world.length; i++) {
         for(let j = 0; j < world[i].length; j++) {
             if (world[i][j] == 1) {
@@ -228,10 +230,12 @@ window.onload = function() {
 
             if (simulateRunning) {
                 state = "SIMULATING"
+            } else {
+                state = "DRAWING"
             }
         }
 
-        if (ev.key = "f") {
+        if (ev.key == "f" && !simulateRunning) {
             if (state == "SIMULATING") {
                 state = "DRAWING"
             } else if (state == "DRAWING") {
