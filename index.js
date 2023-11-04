@@ -22,50 +22,6 @@ function initialize() {
     if (savedWorld) {
         world = JSON.parse(savedWorld);
     }
-
-    // world[3][6] = 1;
-    // world[3][7] = 1;
-    // world[4][6] = 1;
-    // world[4][7] = 1;
-
-    // world[13][6]=1;
-    // world[13][7]=1;
-    // world[13][8]=1;
-    // world[14][5]=1;
-    // world[14][9]=1;
-    // world[15][10]=1;
-    // world[16][10]=1;
-    // world[15][4]=1;
-    // world[16][4]=1;
-
-    // world[17][7]=1;
-
-    // world[19][6]=1;
-    // world[19][7]=1;
-    // world[19][8]=1;
-    // world[18][5]=1;
-    // world[18][9]=1;
-    // world[20][7]=1;
-
-    // world[23]
-
-
-    // Glider
-    // world[5][2] = 1;
-    // world[5][3] = 1;
-    // world[5][4] = 1;
-    // world[4][4] = 1;
-    // world[3][3] = 1;
-
-    // world[5][3] = 1;
-    // world[5][4] = 1;
-    // world[5][2] = 1;
-    // world[6][2] = 1;
-    // world[10][2] = 1;
-    // world[10][3] = 1;
-    // world[10][4] = 1;
-    // world[10][6] = 1;
-    // world[8][6] = 1;
 }
 
 // Any live cell with two or three live neighbours survives.
@@ -141,7 +97,7 @@ function update() {
 
     if (state == "DRAWING") {
         ctx.strokeStyle="gray";
-    } else if (state == "MEASURE") {
+    } else if (state == "COPYING") {
         ctx.strokeStyle = "#878CFF";
     } else if (state == "SIMULATING") {
         ctx.strokeStyle = "green";
@@ -191,31 +147,18 @@ function update() {
     setTimeout(update, 1000/20);
 }
 
-// 600/5 = 200
-// 400 = 2px
-
 let mouseDown = false;
+let mousePosition = {x: 0, y: 0};
 let beginning = null, ending = null;
 let mouseButton = null;
+
+let copied = [];
+
 
 window.onload = function() {
     initialize();
     canvas = document.getElementById("board");
     ctx = canvas.getContext("2d");
-
-    canvas.addEventListener("click", (ev) => {
-        if (state != "DRAWING") {
-            return;
-        }
-
-        let x = Math.round(ev.offsetX / 7);
-        let y = Math.round(ev.offsetY / 7);
-        if (world[x][y] == 1) {
-            world[x][y] = 2;
-        } else {
-            world[x][y] = 1;
-        }
-    }, false);
 
     canvas.addEventListener("mouseup", (ev) => {
         mouseDown = false;
@@ -225,12 +168,24 @@ window.onload = function() {
         let endX = Math.max(beginning.x, ending.x);
         let endY = Math.max(beginning.y, ending.y);
 
-        for (let i = beginX; i <= endX; i++) {
-            for (let j = beginY; j <= endY; j++) {
-                if (mouseButton == 0) {
-                    world[i][j] = 1;
-                } else {
-                    world[i][j] = 2;
+        if (state == "COPYING") {
+            for (let i = beginX; i <= endX; i++) {
+                for (let j = beginY; j <= endY; j++) {
+                    copied.push({
+                        x: i - beginX,
+                        y: j - beginY,
+                        state: world[i][j]
+                    });
+                }
+            }
+        } else {
+            for (let i = beginX; i <= endX; i++) {
+                for (let j = beginY; j <= endY; j++) {
+                    if (mouseButton == 0) {
+                        world[i][j] = 1;
+                    } else {
+                        world[i][j] = 2;
+                    }
                 }
             }
         }
@@ -257,26 +212,44 @@ window.onload = function() {
     }, true);
 
     canvas.addEventListener("mousemove", (ev) => {
-        if (mouseDown) {
-            let x = Math.round(ev.offsetX / 7);
-            let y = Math.round(ev.offsetY / 7);
+        let x = Math.round(ev.offsetX / 7);
+        let y = Math.round(ev.offsetY / 7);
 
+        if (mouseDown) {
             ending = {x: x, y: y};
         }
+
+        mousePosition = {x: x, y: y};
     }, true);
 
     window.addEventListener("keypress", (ev) => {
         if (ev.key == "Enter") {
-            // simulateRunning = !simulateRunning
-            if (state == "DRAWING") {
+            simulateRunning = !simulateRunning
+
+            if (simulateRunning) {
                 state = "SIMULATING"
-            } else if (state == "SIMULATING") {
-                state = "MEASURE"
-            } else if (state == "MEASURE") {
+            }
+        }
+
+        if (ev.key = "f") {
+            if (state == "SIMULATING") {
+                state = "DRAWING"
+            } else if (state == "DRAWING") {
+                state = "COPYING"
+            } else if (state == "COPYING") {
                 state = "DRAWING"
             }
+        }
 
-            simulateRunning = (state == "SIMULATING")
+        if (ev.key == "b") {
+            let offsetX = mousePosition.x;
+            let offsetY = mousePosition.y;
+
+            for (let i = 0; i < copied.length; i++) {
+                let x = offsetX + copied[i].x;
+                let y = offsetY + copied[i].y;
+                world[x][y] = copied[i].state;
+            }
         }
 
         if (ev.key == "s") {
